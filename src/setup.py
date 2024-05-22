@@ -1,20 +1,19 @@
 # type: ignore
-import sys
+import sys, os, uos
 import json
 
-from helper import dir_exists, file_exists, get_logger
-
 sys.path.append('/lib/')
-import logging
-from logging import INFO, DEBUG, WARNING, ERROR, CRITICAL
+
+import logging as log
 from wrapper import rtc_setup, sd_mount
+from helper import dir_exists, file_exists, cp
 
 
 #################################################### CONFIGURATION ####################################################
 
 config = {}
 
-config['datetime'] = [2024, 5, 21, 14, 0, 0, 0, 1]   # year, month, day, hour, minute, second, weekday: integer: 0-6
+config['datetime'] = [2024, 5, 21,   14, 0, 0,   1]   # year, month, day,   hour, minute, second,   weekday: integer: 0-6
 
 config['time'] = {}   # unit: seconds
 config['time']['interval'] = {}
@@ -58,27 +57,27 @@ config['format'] = {}
 config['IO'] = {}
 config['IO']['log'] = {}
 config['IO']['log']['file'] = 'sys.log'
-config['IO']['log']['level'] = INFO
+config['IO']['log']['level'] = 'DEBUG'   # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 config['path'] = {}
 config['fpath'] = {}
 config['files'] = {}
 
-config['path']['sd_mnt'] = '/sd0/'
-config['path']['out'] = {}
 config['path']['src'] = '/src/'
 config['path']['lib'] = '/lib/'
-config['path']['out']['root'] = config['path']['sd_mnt']
+config['files']['src'] = ['setup.py', 'boot.py', 'main.py']
+config['files']['lib'] = ['helper.py', 'logging.py', 'wrapper.py', 'ds1307.py', 'sdcard.py', 'dht11.py']
 
-config['files']['src'] = ['helper.py', 'setup.py', 'boot.py', 'main.py']
-config['files']['lib'] = ['logging.py', 'wrapper.py', 'ds1307.py', 'sdcard.py', 'dht11.py']
+config['path']['sd_root'] = '/sd'   # not modifiable
+config['path']['out'] = {}
+config['path']['out']['root'] = config['path']['sd_root']
 
 # derived paths
-config['path']['out']['records'] = config['path']['out']['root'] + '/' + 'records' + '/'
-config['path']['out']['config'] = config['path']['out']['root'] + '/' + 'config' + '/'
-config['path']['out']['cache'] = config['path']['out']['root'] + '/' + 'cache' + '/'
-config['path']['out']['data'] = config['path']['out']['root'] + '/' + 'data' + '/'
+config['path']['out']['records'] = config['path']['out']['root'] + '/' + 'records'
+config['path']['out']['config'] = config['path']['out']['root'] + '/' + '.config'
+config['path']['out']['cache'] = config['path']['out']['root'] + '/' + '.cache'
+config['path']['out']['data'] = config['path']['out']['root'] + '/' + 'data'
 
 config['fpath']['config'] = '/config.json'
 config['fpath']['sm'] = config['path']['out']['records'] + '/' + 'sm'
@@ -88,15 +87,10 @@ config['fpath']['log'] = config['path']['out']['root'] + '/' + config['IO']['log
 ################################################## END CONFIGURATION ##################################################
 
 ### Setup Logging
-log = logging.getLogger(__name__)
-log.setLevel(config['IO']['log']['level'])
-file_handler = logging.FileHandler('/sys.log', mode='w')
-file_handler.setLevel(config['IO']['log']['level'])
-formatter = logging.Formatter("%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s")
-file_handler.setFormatter(formatter)
-log.addHandler(file_handler)
+log.init(file='/sys.log', lvl=config['IO']['log']['level'], rewrite=True)
 
 
+### Dump configuration to file
 log.info("Dumping configuration to file: /config.json")
 with open('/config.json', 'w') as f:
     json.dump(config, f)
@@ -127,27 +121,37 @@ log.info("RTC setup complete")
 log.info("Updating RTC time")
 clock.datetime = (config['datetime'][0], config['datetime'][1], config['datetime'][2], config['datetime'][3], config['datetime'][4], config['datetime'][5], config['datetime'][6], None)
 log.info("RTC time updated")
-log.info('RTC time: {}'.format(clock.datetime))
+log.info("RTC time: {}".format(clock.datetime))
 
-log.info("Enabling RTC oscillator")
-clock.disable_oscillator = False
-log.info("RTC oscillator enabled")
+if clock.disable_oscillator:
+    log.info("Enabling RTC oscillator")
+    clock.disable_oscillator = False
+    log.info("RTC oscillator enabled.")
+
+log.info("Updating machine time")
+machine.RTC().datetime(clock.datetimeRTC)
+log.info(f"Machine time updated. Machine time: {machine.RTC().datetime()}")
 
 
 ### Setup SD Card
 log.info("Mounting SD Card")
+
 check = sd_mount()
 if not check:
     log.error("SD Card could not be mounted")
     raise Exception("SD Card could not be mounted")
+
 log.info("SD Card mounted")
+
+log.move(config['fpath']['log'], rewrite=True)
+
+log.info("Copying configuration file to SD Card")
+cp(config['fpath']['config'], config['path']['out']['config'] + '/config.json')
 
 
 ### Create necessary output directories
-log.info("Creating necessary output directories")
 for key, value in config['path']['out'].items():
     if not dir_exists(value):
-        print(value)
         log.info(f"Creating directory: {value}")
         os.mkdir(value)
 log.info("All necessary output directories created")

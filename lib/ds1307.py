@@ -1,359 +1,164 @@
-#!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
+# License-Identifier: MIT
 
 """
-I2C RTC driver for DS1307
+DS1307 Real Time Clock driver
+=============================
 
-https://github.com/mcauser/micropython-tinyrtc-i2c
+MicroPython library to support DS1307 Real Time Clock (RTC).
 
-MIT License
-Copyright (c) 2018 Mike Causer
-Extended 2023 by brainelectronics
+Acknowledgement: This module was derived in outline from the adafruit circuit python DS1307
+real time clock library. That library was authored by Philip R. Moyer and
+Radomir Dopieralski for Adafruit Industries.
+See repository: https://github.com/adafruit/Adafruit_CircuitPython_DS1307.git
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Beware the DS1307 breakout is a 5V board but many boards are 3.3v logic level!
+Make sure that the SCL and SDA pins used are 5v tolerant or level shifted to 3.3v.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+* Author: Peter Lumb (@peter-l5)
+* Build: v104
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Implementation Notes
+--------------------
 
-BCD Format:
-https://en.wikipedia.org/wiki/Binary-coded_decimal
+**Hardware:**
+
+* For example: Adafruit `DS1307 RTC breakout <https://www.adafruit.com/products/3296>`
+  (Adafruit Product ID: 3296)
+
+**Software and Dependencies:**
+
+* micropython firmware: https://micropython.org/
+
+**Notes:**
+
+#1.  the square-wave output facility is not supported by this driver.
+#2.  milliseconds are not supported by this RTC.
+#3.  alarms and timers are not supported by this RTC.
+#4.  datasheet: https://www.analog.com/media/en/technical-documentation/data-sheets/ds1307.pdf
+
 """
 
-# system packages
-from machine import I2C
-try:
-    from micropython import const
-except ImportError:
-    def const(x):
-        return x
+__version__ = "v104"
+__repo__ = "https://github.com/peter-l5"
 
+from micropython import const
 
-class _Subscriptable():
-    def __getitem__(self, item):
-        return None
+# register definitions (see datasheet)
+_DATETIME_REGISTER = const(0x00)
+_CONTROL_REGISTER  = const(0x07)
 
+class DS1307():
+    """
+    Interface to the DS1307 RTC.
 
-_subscriptable = _Subscriptable()
+    **Quickstart: Importing and using the device**
 
-Optional = _subscriptable
-Tuple = _subscriptable
+        Here is an example of using the :class:`DS1307` class.
+        First you will need to import the libraries to use the sensor
 
-DATETIME_REG = const(0)     # 0x00-0x06
-CHIP_HALT = const(128)
-CONTROL_REG = const(7)      # 0x07
-RAM_REG = const(8)          # 0x08-0x3F
+        .. code-block:: python
 
+            from machine import Pin, SoftI2C
+            import ds1307
 
-class DS1307(object):
-    """Driver for the DS1307 RTC."""
+        Once this is done you can define your `board.I2C` object and define your DS1307 clock object
 
-    def __init__(self, addr=0x68, i2c: Optional[I2C] = None) -> None:
-        """
-        Constructs a new instance
+        .. code-block:: python
 
-        :param      addr:   The I2C bus address of the EEPROM
-        :type       addr:   int
-        :param      i2c:    I2C object
-        :type       i2c:    I2C
-        """
-        self._addr = addr
+            # uses SoftI2C class and pins for Raspberry Pi pico 
+            i2c0 = SoftI2C(scl=Pin(1), sda=Pin(0), freq=100000)
+            ds1307rtc = ds1307.DS1307(i2c0, 0x68)
 
-        if i2c is None:
-            # default assignment, check the docs
-            self._i2c = I2C(0)
-        else:
-            self._i2c = i2c
+        Now you can give the current time to the device.
 
-        self._weekday_start = 0
-        self._halt = False
+        .. code-block:: python
 
-    @property
-    def addr(self) -> int:
-        """
-        Get the DS1307 I2C bus address
+            # set time (year, month, day, hours. minutes, seconds, weekday: integer: 0-6 )
+            ds1307rtc.datetime = (2022, 12, 18, 18, 9, 17, 6)
 
-        :returns:   DS1307 I2C bus address
-        :rtype:     int
-        """
-        return self._addr
+        You can access the current time with the :attr:`datetime` property.
 
-    @property
-    def weekday_start(self) -> int:
-        """
-        Get the start of the weekday
+        .. code-block:: python
 
-        :returns:   Weekday start
-        :rtype:     int
-        """
-        return self._weekday_start
+            current_time = ds1307rtc.datetime
 
-    @weekday_start.setter
-    def weekday_start(self, value: int) -> None:
-        """Set the start of the weekday"""
-        if 0 <= value <= 6:
-            self._weekday_start = value
-        else:
-            raise ValueError("Weekday can only be in range 0-6")
+        You can also access the current time with the :attr:`datetimeRTC` property.
+        This returns the time in a format suitable for directly setting the internal RTC clock
+        of the Raspberry Pi Pico (once the RTC module is imported).
+
+        .. code-block:: python
+
+        from machine import RTC
+        machine.RTC().datetime(ds1307rtc.datetimeRTC)
+
+        The disable oscillator property may be useful to stop the clock when not in use
+        to reduce demand on the standby battery.
+        
+        See also the example code provided.
+    """
+
+    def __init__(self, i2c_bus: I2C, addr = 0x68) -> None:
+        self.i2c = i2c_bus
+        self.addr = addr
+        self.buf = bytearray(7)
+        self.buf1 = bytearray(1)
 
     @property
-    def datetime(self) -> Tuple[int, int, int, int, int, int, int, int]:
-        """
-        Get the current datetime
-
-        (2023, 4, 18, 0, 10, 34, 4, 108)
-        y,     m,  d, h, m,  s, wd, yd
-
-        :returns:   (year, month, day, hour, minute, second, weekday, yearday)
-        :rtype:     Tuple[int, int, int, int, int, int, int, int]
-        """
-        buf = bytearray(7)
-
-        buf = self._i2c.readfrom_mem(self._addr, DATETIME_REG, 7)
-
-        year = self._bcd_to_dec(buf[6]) + 2000
-        month = self._bcd_to_dec(buf[5])
-        day = self._bcd_to_dec(buf[4])
-        yearday = self.day_of_year(year=year, month=month, day=day)
-        return (
-            year,
-            month,
-            day,
-            self._bcd_to_dec(buf[2]),           # hour
-            self._bcd_to_dec(buf[1]),           # minute
-            self._bcd_to_dec(buf[0] & 0x7F),    # second
-            self._bcd_to_dec(buf[3] - self._weekday_start),     # weekday
-            yearday,
-        )
+    def datetime(self) -> tuple:
+        """Returns the current date, time and day of the week."""
+        self.i2c.readfrom_mem_into(self.addr, _DATETIME_REGISTER, self.buf)
+        hr24 = False if (self.buf[2] & 0x40) else True
+        _datetime = (self._bcd2dec(self.buf[6]) + 2000,
+                     self._bcd2dec(self.buf[5]),
+                     self._bcd2dec(self.buf[4]),
+                     self._bcd2dec(self.buf[2]) if hr24 else
+                         self._bcd2dec((self.buf[2] & 0x1f))
+                         +  12 if (self.buf[2] & 0x20) else 0,
+                     self._bcd2dec(self.buf[1]), # minutes
+                     self._bcd2dec(self.buf[0] & 0x7f), # seconds, remove oscilator disable flag
+                     self.buf[3] -1,
+                     None # unknown number of days since start of year
+                     )
+        return _datetime        
 
     @datetime.setter
-    def datetime(self, datetime: Tuple[int, int, int, int, int, int, int, int]) -> None:    # noqa: E501
-        """
-        Set datetime
-
-        (2023, 4, 18, 20, 23, 38, 1, 108) by time.gmtime(time.time())
-        y,     m,  d,  h, min,sec,wday, yday
-        0,     1,  2,  3,  4,   5,   6, 7
-
-        :param      datetime:  The datetime
-        :type       datetime:  Tuple[int, int, int, int, int, int, int, int]
-        """
-        buf = bytearray(7)
-
-        # msb = CH, 1 = halt, 0 = go
-        buf[0] = self._dec_to_bcd(datetime[5]) & 0x7F   # second
-        buf[1] = self._dec_to_bcd(datetime[4])  # minute
-        buf[2] = self._dec_to_bcd(datetime[3])  # hour
-        buf[3] = self._dec_to_bcd(datetime[6] + self._weekday_start)
-        buf[4] = self._dec_to_bcd(datetime[2])  # day
-        buf[5] = self._dec_to_bcd(datetime[1])  # month
-        buf[6] = self._dec_to_bcd(datetime[0] - 2000)   # year
-
-        if (self._halt):
-            buf[0] |= (1 << 7)
-
-        self._i2c.writeto_mem(self._addr, DATETIME_REG, buf)
-
+    def datetime(self, datetime: tuple = None):
+        """Set the current date, time and day of the week, and starts the clock."""
+        self.buf[6] = self._dec2bcd(datetime[0] % 100) # years
+        self.buf[5] = self._dec2bcd(datetime[1] ) # months
+        self.buf[4] = self._dec2bcd(datetime[2] ) # days
+        self.buf[2] = self._dec2bcd(datetime[3] ) # hours
+        self.buf[1] = self._dec2bcd(datetime[4] ) # minutes
+        self.buf[0] = self._dec2bcd(datetime[5] ) # seconds
+        self.buf[3] = self._dec2bcd(datetime[6] +1) # weekday (0-6)
+        self.i2c.writeto_mem(self.addr, _DATETIME_REGISTER, self.buf)
+ 
     @property
-    def year(self) -> int:
-        """
-        Get the year from the RTC
-
-        :returns:   Year of RTC
-        :rtype:     int
-        """
-        return self.datetime[0]
-
+    def datetimeRTC(self) -> tuple:
+        _dt = self.datetime
+        return _dt[0:3] + (None,) + _dt[3:6] + (None,)
+ 
     @property
-    def month(self) -> int:
-        """
-        Get the month from the RTC
-
-        :returns:   Month of RTC
-        :rtype:     int
-        """
-        return self.datetime[1]
-
-    @property
-    def day(self) -> int:
-        """
-        Get the day from the RTC
-
-        :returns:   Day of RTC
-        :rtype:     int
-        """
-        return self.datetime[2]
-
-    @property
-    def hour(self) -> int:
-        """
-        Get the hour from the RTC
-
-        :returns:   Hour of RTC
-        :rtype:     int
-        """
-        return self.datetime[3]
-
-    @property
-    def minute(self) -> int:
-        """
-        Get the minute from the RTC
-
-        :returns:   Minute of RTC
-        :rtype:     int
-        """
-        return self.datetime[4]
-
-    @property
-    def second(self) -> int:
-        """
-        Get the second from the RTC
-
-        :returns:   Second of RTC
-        :rtype:     int
-        """
-        return self.datetime[5]
-
-    @property
-    def weekday(self) -> int:
-        """
-        Get the weekday from the RTC
-
-        :returns:   Weekday of RTC
-        :rtype:     int
-        """
-        return self.datetime[5]
-
-    @property
-    def yearday(self) -> int:
-        """
-        Get the yearday from the RTC
-
-        :returns:   Yearday of RTC
-        :rtype:     int
-        """
-        return self.datetime[7]
-
-    def is_leap_year(self, year: int) -> bool:
-        """
-        Determines whether the specified year is a leap year.
-
-        :param      year:  The year
-        :type       year:  int
-
-        :returns:   True if the specified year is leap year, False otherwise.
-        :rtype:     bool
-        """
-        return (year % 4 == 0)
-
-    def day_of_year(self, year: int, month: int, day: int) -> int:
-        """
-        Get the day of the year
-
-        :param      year:   The year
-        :type       year:   int
-        :param      month:  The month
-        :type       month:  int
-        :param      day:    The day
-        :type       day:    int
-
-        :returns:   Day of the year, January 1 is day 1
-        :rtype:     int
-        """
-        month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        year -= 2000
-        days16 = day
-
-        for x in range(1, month):
-            days16 += month_days[x - 1]
-
-        if month >= 2 and self.is_leap_year(year=year):
-            days16 += 1
-
-        return days16
-
-    @property
-    def halt(self) -> bool:
-        """
-        Get status of DS1307
-
-        :returns:   Status of DS1307
-        :rtype:     bool
-        """
-        return self._halt
-
-    @halt.setter
-    def halt(self, value: bool = False) -> None:
-        """
-        Power up or power down the RTC oscillator
-
-        :param      value:  The value
-        :type       value:  bool
-        """
-        reg = self._i2c.readfrom_mem(self._addr, DATETIME_REG, 1)[0]
-
-        if value:
-            reg |= CHIP_HALT
-        else:
-            reg &= ~CHIP_HALT
-
-        self._halt = bool(value)
-        self._i2c.writeto_mem(self._addr, DATETIME_REG, bytearray([reg]))
-
-    def square_wave(self, sqw: int = 0, out: int = 0) -> None:
-        """
-        Output square wave on pin SQ
-
-        at 1Hz, 4.096kHz, 8.192kHz or 32.768kHz, or disable the oscillator
-        and output logic level high/low.
-        """
-        if sqw not in (0, 1, 4, 8, 32):
-            raise ValueError(
-                "Squarewave can be set to 0Hz, 1Hz, {}Hz, {}Hz or {}Hz".format(
-                    2 ** 12, 2 ** 13, 2 ** 15)
-            )
-
-        rs0 = 1 if sqw == 4 or sqw == 32 else 0
-        rs1 = 1 if sqw == 8 or sqw == 32 else 0
-        out = 1 if out > 0 else 0
-        sqw = 1 if sqw > 0 else 0
-
-        reg = rs0 | rs1 << 1 | sqw << 4 | out << 7
-
-        self._i2c.writeto_mem(self._addr, CONTROL_REG, bytearray([reg]))
-
-    def _dec_to_bcd(self, value: int) -> int:
-        """
-        Convert decimal to binary coded decimal (BCD) format
-
-        :param      value:  The value
-        :type       value:  int
-
-        :returns:   Binary coded decimal (BCD) format
-        :rtype:     int
-        """
-        return (value // 10) << 4 | (value % 10)
-
-    def _bcd_to_dec(self, value: int) -> int:
-        """
-        Convert binary coded decimal (BCD) format to decimal
-
-        :param      value:  The value
-        :type       value:  int
-
-        :returns:   Decimal value
-        :rtype:     int
-        """
-        return ((value >> 4) * 10) + (value & 0x0F)
+    def disable_oscillator(self) -> bool:
+        """True if the oscillator is disabled."""
+        self.i2c.readfrom_mem_into(self.addr, _DATETIME_REGISTER, self.buf1)
+        self._disable_oscillator = bool(self.buf1[0] & 0x80)
+        return self._disable_oscillator
+    
+    @disable_oscillator.setter
+    def disable_oscillator(self, value: bool):
+        """Set or clear the DS1307 disable oscillator flag."""
+        self._disable_oscillator = value
+        self.i2c.readfrom_mem_into(self.addr, _DATETIME_REGISTER, self.buf1)
+        self.buf1[0] &= 0x7f  # preserve seconds
+        self.buf1[0] |= self._disable_oscillator << 7
+        self.i2c.writeto_mem(self.addr, _DATETIME_REGISTER, self.buf1)
+  
+    def _bcd2dec(self, bcd):
+        """Convert binary-coded decimal to decimal. Works for values from 0 to 99 (decimal)."""
+        return (bcd >> 4) * 10 + (bcd & 0x0F)
+    
+    def _dec2bcd(self, decimal):
+        """Convert decimal to binary-coded decimal. Works for values from 0 to 99."""
+        return ((decimal // 10) << 4) + (decimal % 10)
+  
