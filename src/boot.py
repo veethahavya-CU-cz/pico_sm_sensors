@@ -1,31 +1,42 @@
 # type: ignore
-import sys, os
+import sys
 import time
+from machine import RTC, Pin
 
-sys.path.append('/lib')
+from picosleep import seconds as sleep
+from time import sleep as pause
+
+
+sys.path.append('/lib/')
 
 import logging as log
 from wrapper import rtc_setup, sd_mount
-from helper import dir_exists, file_exists, get_config, strf_time
+from helper import dir_exists, file_exists, get_config, strf_time, prep_next_ts
 
-if file_exists('/config.json'):
+
+led = Pin('LED', Pin.OUT)
+led.on()
+
+### Read config file
+if file_exists('/config.json'): 
     config = get_config()
 
-    ### Setup SD Card
     if not dir_exists(config['path']['sd_root']):
-        log.info("Mounting SD Card")
-        check = sd_mount()
-        if not check:
-            log.error("SD Card could not be mounted")
-            raise Exception("SD Card could not be mounted")
-        log.info("SD Card mounted")
+        ### Setup SD Card
+        if not dir_exists(config['path']['sd_root']):
+            log.info("Mounting SD Card")
+            check = sd_mount()
+            if not check:
+                log.error("SD Card could not be mounted")
+                raise Exception("SD Card could not be mounted")
+            log.info("SD Card mounted")
     
     ### Setup logging
     log.init(config['fpath']['log'], config['IO']['log']['level'], rewrite=False)
     log.info("\n...\n\n\n\n...\n.......STARTING BOOT SEQUENCE.......\n...\n")
 
     last_recorded_time = time.localtime()
-    log.critical(f"Last recorded time: {strf_time(last_recorded_time, 'time.localtime')}")
+    log.critical(f"Last recorded time: {strf_time(last_recorded_time, 'time_tuple')}")
 
 
     ### Check if necessary source and library files exist
@@ -55,8 +66,8 @@ if file_exists('/config.json'):
         log.info("RTC oscillator enabled.")
 
     log.info("Updating machine time")
-    machine.RTC().datetime(clock.datetimeRTC)
-    log.info(f"Machine time updated. Machine time: {machine.RTC().datetime()}")
+    RTC().datetime(clock.datetimeRTC)
+    log.info(f"Machine time updated. Machine time: {RTC().datetime()}")
     
     with open('/sd/data/outages.rec', 'a') as f:
         f.write(f"OFFLINE: {strf_time(last_recorded_time)}\nONLINE: {strf_time(time.localtime())}\n\n")
@@ -72,6 +83,11 @@ if file_exists('/config.json'):
 else:
     with open('/ERR', 'w') as f:
         f.write("Config file not found!")
+    log.critical("Config file not found!")
+    raise Exception("Config file not found!")
 
 
-# TODO: sleep until next scheduled time
+### Calculate next record time
+next_record_time, next_record_timestamp = prep_next_ts()
+led.off()
+sleep(next_record_time - time.time() - config['time']['wake_haste'])
