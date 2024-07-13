@@ -6,6 +6,10 @@
 		{
 			"name": "Pico (W) Remote Workspace",
 			"uri": "pico:"
+		},
+		{
+			"name": "pymakr_test",
+			"path": "C:/Users/Veethahavya/Desktop/pymakr_test"
 		}
 	],
 	"settings": {

@@ -2,7 +2,9 @@
 import sys
 from machine import RTC, Pin
 
-from picosleep import seconds as sleep
+from time import localtime, time
+# from picosleep import seconds as sleep
+from machine import deepsleep as sleep
 from time import sleep as pause
 
 
@@ -63,9 +65,9 @@ while True:
         else:
             log.critical("Next record time not found in cache")
 
-        # if next_record_time - time.time() > config['time']['interval']['SM']['sampling'] * config['samples']['per_red']['SM'] + 3:
-        #     log.info(f"Pausing for {next_record_time - time.time()} seconds")
-        # pause(next_record_time - time.time())
+        # if next_record_time - time() > config['time']['interval']['SM']['sampling'] * config['samples']['per_red']['SM'] + 3:
+        #     log.info(f"Pausing for {next_record_time - time()} seconds")
+        # pause(next_record_time - time())
 
         if 'SM' in recs:
             log.info("Reading soil moisture")
@@ -102,9 +104,15 @@ while True:
 
         ### Calculate next record time
         next_record_time, next_record_timestamp = prep_next_ts()
-        sleep(next_record_time - time.time() - config['time']['wake_haste'])
+        led.off()
+        if next_record_time - time() > config['time']['wake_haste']:
+            log.info(f"Sleeping until next record time: {strf_time(next_record_time)}")
+            sleep(next_record_time - time() - config['time']['wake_haste'])
+        else:
+            log.info("Next record time is too close. Skipping sleep.")
+            pause(next_record_time - time())
     
     while switch.value() == 0:
         log.info("Recording turned off. Pausing for 60 seconds")
-        pasue(60)
+        pause(60)
         log.info("Resuming switch check")

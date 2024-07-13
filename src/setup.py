@@ -15,11 +15,12 @@ from helper import dir_exists, file_exists, cp
 #################################################### CONFIGURATION ####################################################
 
 # ACTIVE CONFIGURATION
+
 year = 2024
-month = 6
+month = 7
 day = 6
-hour = 8
-minute = 1
+hour = 22
+minute = 41
 second = 0
 weekday = 1
 
@@ -40,7 +41,7 @@ config['time']['interval'] = {}
 config['time']['wake_haste'] = 7
 
 config['time']['interval']['SM'] = {}
-config['time']['interval']['SM']['logging'] = 60 * 10
+config['time']['interval']['SM']['logging'] = 60 * 5
 config['time']['interval']['SM']['sampling'] = 0.1
 
 config['time']['interval']['DHT11'] = {}
@@ -135,11 +136,11 @@ log.info("Dumping configuration to file: /config.json")
 with open('/config.json', 'w') as f:
     json.dump(config, f)
 with open('/ID', 'w') as f:
-    f.write(str(ID))
+    f.write(str(config['ID']))
 with open('/LOC', 'w') as f:
-    f.write(LOC)
+    f.write(config['LOC'])
 with open('/NOTES', 'w') as f:
-    f.write(NOTES)
+    f.write(config['NOTES'])
 log.info("Configuration dumped")
 
 

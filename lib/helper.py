@@ -108,31 +108,34 @@ def get_next_record_time(current_time, interval, mode='unix_epoch'):
         return 0
     
     if mode == 'time_tuple':
-        year, month, day, hour, minute, second, _, _ = current_time
+        year, month, day, hour, minute, second, DoW, pr = current_time
 
-        intervals_passed = minute // interval
-        next_interval_minute = (intervals_passed + 1) * interval
+        total_seconds = hour * 3600 + minute * 60 + second
+        next_interval_seconds = ((total_seconds // interval) + 1) * interval
 
-        if next_interval_minute >= 60:
-            next_interval_minute -= 60
-            hour += 1
-            if hour >= 24:
-                hour = 0
-                day += 1
-                if day > days_in_month(year, month):
-                    day = 1
-                    month += 1
-                    if month > 12:
-                        month = 1
-                        year += 1
-        
-        return (year, month, day, hour, next_interval_minute, 0)
+        days_added = next_interval_seconds // (24 * 3600)
+        next_interval_seconds %= 24 * 3600
+
+        next_hour = next_interval_seconds // 3600
+        next_interval_seconds %= 3600
+        next_minute = next_interval_seconds // 60
+        next_second = next_interval_seconds % 60
+
+        day += days_added
+        while day > days_in_month(year, month):
+            day -= days_in_month(year, month)
+            month += 1
+            if month > 12:
+                month = 1
+                year += 1
+
+        return (year, month, day, next_hour, next_minute, next_second, DoW, pr)
 
     elif mode == 'unix_epoch':
-        interval_seconds = interval * 60
-        next_epoch = ((current_time + interval_seconds - 1) // interval_seconds) * interval_seconds
-        return next_epoch
+        next_time = ((current_time // interval) + 1) * interval
+        return next_time
     else:
+        log.error('@helper.py/get_next_record_time: Invalid mode')
         raise ValueError('Invalid mode')
 
 
@@ -143,13 +146,13 @@ def prep_next_ts():
     recs = []
     if not config['time']['interval']['DHT11']['logging'] == None:
         next_dht_record_time = get_next_record_time(time.time(), config['time']['interval']['DHT11']['logging'], mode='unix_epoch')
-        next_dht_record_timestamp = strf_time(get_next_record_time(time.localtime(), config['time']['interval']['DHT11']['logging']//60, 'time_tuple'))
+        next_dht_record_timestamp = strf_time(next_dht_record_time, 'unix_epoch')
         log.info(f"Next DHT11 record time: ({next_dht_record_timestamp})")
     else:
         next_dht_record_time = None
 
     next_sm_record_time = get_next_record_time(time.time(), config['time']['interval']['SM']['logging'], mode='unix_epoch')
-    next_sm_record_timestamp = strf_time(get_next_record_time(time.localtime(), config['time']['interval']['SM']['logging']//60, 'time_tuple'))
+    next_sm_record_timestamp = strf_time(next_sm_record_time, 'unix_epoch')
     log.info(f"Next SM record time: ({next_sm_record_timestamp})")
 
     if not next_dht_record_time == None:
@@ -176,6 +179,5 @@ def prep_next_ts():
     with open(config['path']['out']['cache'] + '/rec_time', 'w') as f:
         f.write(str(next_record_time) + '\n')
         f.write(str(next_record_timestamp) + '\n')
-    log.debug("Next record time saved to cache file.")
 
     return next_record_time, next_record_timestamp

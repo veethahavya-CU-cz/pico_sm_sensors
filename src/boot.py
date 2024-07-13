@@ -1,9 +1,10 @@
 # type: ignore
 import sys
-import time
 from machine import RTC, Pin
 
-from picosleep import seconds as sleep
+from time import localtime, time
+# from picosleep import seconds as sleep
+from machine import lightsleep as sleep
 from time import sleep as pause
 
 
@@ -16,6 +17,8 @@ from helper import dir_exists, file_exists, get_config, strf_time, prep_next_ts
 
 led = Pin('LED', Pin.OUT)
 led.on()
+
+log.info("\n...\n\n\n\n...\n.......STARTING BOOT SEQUENCE.......\n...\n")
 
 ### Read config file
 if file_exists('/config.json'): 
@@ -33,9 +36,8 @@ if file_exists('/config.json'):
     
     ### Setup logging
     log.init(config['fpath']['log'], config['IO']['log']['level'], rewrite=False)
-    log.info("\n...\n\n\n\n...\n.......STARTING BOOT SEQUENCE.......\n...\n")
 
-    last_recorded_time = time.localtime()
+    last_recorded_time = localtime() #FIXME: This should be the last recorded time from the SD card
     log.critical(f"Last recorded time: {strf_time(last_recorded_time, 'time_tuple')}")
 
 
@@ -70,7 +72,7 @@ if file_exists('/config.json'):
     log.info(f"Machine time updated. Machine time: {RTC().datetime()}")
     
     with open('/sd/data/outages.rec', 'a') as f:
-        f.write(f"OFFLINE: {strf_time(last_recorded_time)}\nONLINE: {strf_time(time.localtime())}\n\n")
+        f.write(f"OFFLINE: {strf_time(last_recorded_time)}\nONLINE: {strf_time(localtime())}\n\n")
 
 
     ### Create necessary output directories
@@ -90,4 +92,9 @@ else:
 ### Calculate next record time
 next_record_time, next_record_timestamp = prep_next_ts()
 led.off()
-sleep(next_record_time - time.time() - config['time']['wake_haste'])
+if next_record_time - time() > config['time']['wake_haste']:
+    log.info(f"Sleeping until next record time: {strf_time(next_record_time)}")
+    sleep(next_record_time - time() - config['time']['wake_haste'])
+else:
+    log.info("Next record time is too close. Skipping sleep.")
+    pause(next_record_time - time())
