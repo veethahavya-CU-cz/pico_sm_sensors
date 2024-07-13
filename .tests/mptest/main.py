@@ -2,7 +2,7 @@ from machine import Pin, UART
 from machine import deepsleep, lightsleep
 from rp2 import bootsel_button
 from utime import sleep as usleep
-from time import sleep
+from time import sleep, sleep_ms
 
 uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
 led = Pin('LED', Pin.OUT)
@@ -12,6 +12,7 @@ while True:
     if not bootsel_button():
         led.on()
         uart.write(f'{n}. Hello from node!\n')
+        sleep_ms(50)
         sleep(1)
         led.off()
         lightsleep(7 * 1000)
