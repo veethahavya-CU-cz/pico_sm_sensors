@@ -1,84 +1,67 @@
 # type: ignore
-import sys
+from sys import path
 from machine import RTC, Pin
-
-from time import localtime, time
-# from picosleep import seconds as sleep
-from machine import lightsleep as sleep
+from utime import time
 from time import sleep as pause
+from machine import lightsleep as sleep
 
-
-sys.path.append('/lib/')
-
+path.append('/lib/')
 import logging as log
 from wrapper import rtc_setup, sd_mount
 from helper import dir_exists, file_exists, get_config, strf_time, prep_next_ts
 
 
+
 led = Pin('LED', Pin.OUT)
 led.on()
-
 log.info("\n...\n\n\n\n...\n.......STARTING BOOT SEQUENCE.......\n...\n")
 
-### Read config file
-if file_exists('/config.json'): 
-    config = get_config()
-
-    if not dir_exists(config['path']['sd_root']):
-        ### Setup SD Card
-        if not dir_exists(config['path']['sd_root']):
-            log.info("Mounting SD Card")
-            check = sd_mount()
-            if not check:
-                log.error("SD Card could not be mounted")
-                raise Exception("SD Card could not be mounted")
-            log.info("SD Card mounted")
+# Read config file
+if file_exists('/config.json'):
+    CONFIG = get_config()
     
-    ### Setup logging
-    log.init(config['fpath']['log'], config['IO']['log']['level'], rewrite=False)
+    # Setup SD Card
+    if not dir_exists(CONFIG['path']['sd_root']):
+        log.info("Mounting SD Card")
+        if not sd_mount():
+            log.error("SD Card could not be mounted")
+            raise Exception("SD Card could not be mounted")
+        log.info("SD Card mounted")
 
-    last_recorded_time = localtime() #FIXME: This should be the last recorded time from the SD card
-    log.critical(f"Last recorded time: {strf_time(last_recorded_time, 'time_tuple')}")
+    # Setup logging
+    if CONFIG['IO']['log']['UART']:
+        uart_out = [CONFIG['Pin']['UART']['BUS'], CONFIG['time']['interval']['UART_BAUD'], CONFIG['Pin']['UART']['TX'], CONFIG['Pin']['UART']['RX']]
+    else:
+        uart_out = None
+    log.init(file=CONFIG['IO']['log']['file'], lvl=CONFIG['IO']['log']['level'], rewrite=True, uart_out=uart_out)
 
+    # Check necessary source and library files
+    log.info("Checking necessary files")
+    for file in CONFIG['files']['src'] + CONFIG['files']['lib']:
+        path = CONFIG['path']['src'] + '/' + file if file in CONFIG['files']['src'] else CONFIG['path']['lib'] + '/' + file
+        if not file_exists(path):
+            log.critical(f"File '{file}' not found in '{path}'")
+            raise Exception(f"File '{file}' not found in '{path}'")
+    log.info("All necessary files found")
 
-    ### Check if necessary source and library files exist
-    log.info("Checking if necessary source and library files exist")
-
-    for file in config['files']['src']:
-        if not file_exists(config['path']['src'] + '/' + file):
-            log.critical(f"Source file '{file}' not found in '{config['path']['src']}'")
-            raise Exception(f"Source file '{file}' not found in '{config['path']['src']}'")
-
-    for file in config['files']['lib']:
-        if not file_exists(config['path']['lib'] + '/' + file):
-            log.critical(f"Library file '{file}' not found in '{config['path']['lib']}'")
-            raise Exception(f"Library file '{file}' not found in '{config['path']['lib']}'")
-
-    log.info("All necessary source and library files found")
-
-
-    ### Setup RTC
+    # Setup RTC
     log.info("Setting up RTC")
     clock = rtc_setup()
     log.info("RTC setup complete")
-
     if clock.disable_oscillator:
         log.critical("RTC oscillator was disabled! Enabling RTC oscillator.")
         clock.disable_oscillator = False
         log.info("RTC oscillator enabled.")
-
     log.info("Updating machine time")
-    RTC().datetime(clock.datetimeRTC)
-    log.info(f"Machine time updated. Machine time: {RTC().datetime()}")
-    
-    with open('/sd/data/outages.rec', 'a') as f:
-        f.write(f"OFFLINE: {strf_time(last_recorded_time)}\nONLINE: {strf_time(localtime())}\n\n")
+    internal_clock = RTC()
+    internal_clock.datetime(clock.datetimeRTC)
+    log.info(f"Machine time updated: {RTC().datetime()}")
 
 
-    ### Create necessary output directories
-    for key, value in config['path']['out'].items():
+    # Create necessary output directories
+    for value in CONFIG['path']['out'].values():
         if not dir_exists(value):
-            log.critical(f"Output directory '{value}' not found. Creating directory.")
+            log.critical(f"Output directory '{value}' not found. Creating.")
             os.mkdir(value)
     log.info("Output directories checked.")
 
@@ -88,13 +71,17 @@ else:
     log.critical("Config file not found!")
     raise Exception("Config file not found!")
 
-
-### Calculate next record time
+# Calculate next record time
 next_record_time, next_record_timestamp = prep_next_ts()
 led.off()
-if next_record_time - time() > config['time']['wake_haste']:
-    log.info(f"Sleeping until next record time: {strf_time(next_record_time)}")
-    sleep(next_record_time - time() - config['time']['wake_haste'])
+
+# Sleep or pause until the next record time
+time_to_next_record = next_record_time - time()
+if time_to_next_record > CONFIG['time']['wake_haste']:
+    log.info(f"Sleeping until next record time: {strf_time(next_record_time, 'time.time')}, for {time_to_next_record} seconds.")
+    sleep((time_to_next_record - CONFIG['time']['wake_haste']) * 1000)
+    log.info("Woke up from sleep (@boot). Starting main loop.")
 else:
     log.info("Next record time is too close. Skipping sleep.")
-    pause(next_record_time - time())
+    pause(time_to_next_record)
+    log.info("Starting main loop.")
