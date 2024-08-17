@@ -4,8 +4,8 @@
 			"path": "."
 		},
 		{
-			"name": "serial:/COM7",
-			"uri": "serial://com7/"
+			"name": "src",
+			"path": "src"
 		}
 	],
 	"settings": {

@@ -1,0 +1,27 @@
+import sys
+from machine import SoftI2C, Pin
+from time import sleep
+sys.path.append('./lib/')
+from ds1307 import DS1307
+
+i2c0 = SoftI2C(scl=Pin(7), sda=Pin(6), freq=1_00_000)
+i2c0.scan()
+clock = DS1307(i2c0, 0x68)
+
+# get
+print(clock.datetime)
+
+# set time (year, month, day, hours, minutes, seconds, weekday: integer: 0-6 )
+clock.datetime = (2026, 12, 31, 23, 59, 59, 0, None)
+
+print(clock.datetime)
+sleep(1)
+print(clock.datetime)
+sleep(1)
+print(clock.datetime)
+
+"""
+You can also access the current time with the :attr:`datetimeRTC` property.
+        This returns the time in a format suitable for directly setting the internal RTC clock
+        of the Raspberry Pi Pico (once the RTC module is imported).
+"""

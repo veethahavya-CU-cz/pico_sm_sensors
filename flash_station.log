@@ -1,0 +1,98 @@
+
+The station controller has some files on them: ['sd','.archive','ID','LOC','NOTES','boot.py','config.json','lib','machine_config.py','main.py','usr']. Would you like to remove them for a clean install?? (y/n): Cleaning up /
+removing file: //ID
+removing file: //LOC
+removing file: //NOTES
+removing file: //boot.py
+removing file: //config.json
+removing file: //machine_config.py
+removing file: //main.py
+Warning: Not formating SD Card mounted at '//sd'
+removing dir: //.archive
+Cleaning up //.archive
+removing file: //.archive/machine_config.py
+removing file: //.archive/station.txt
+removing dir: //lib
+Cleaning up //lib
+removing file: //lib/datetime.mpy
+removing file: //lib/dht.mpy
+removing file: //lib/sdcard.mpy
+removing file: //lib/upysh.mpy
+removing dir: //lib/ds1307
+Cleaning up //lib/ds1307
+removing file: //lib/ds1307/__init__.py
+removing file: //lib/ds1307/ds1307.py
+removing file: //lib/ds1307/version.py
+removing dir: //lib/os
+Cleaning up //lib/os
+removing file: //lib/os/__init__.mpy
+removing file: //lib/os/path.mpy
+removing dir: //usr
+Cleaning up //usr
+removing dir: //usr/lib
+Cleaning up //usr/lib
+removing file: //usr/lib/picostation_helper.py
+removing file: //usr/lib/picostation_logging.py
+removing file: //usr/lib/picostation_wrapper.py
+Installing libraries: 'upysh', 'os-path', and 'datetime'
+Install upysh
+Installing upysh (latest) from https://micropython.org/pi/v2 to /lib
+Installing: /lib/upysh.mpy
+Done
+Install os-path
+Installing os-path (latest) from https://micropython.org/pi/v2 to /lib
+Installing: /lib/os/__init__.mpy
+Installing: /lib/os/path.mpy
+Done
+Install datetime
+Installing datetime (latest) from https://micropython.org/pi/v2 to /lib
+Installing: /lib/datetime.mpy
+Done
+Installing library: 'sdcard'
+Install sdcard
+Installing sdcard (latest) from https://micropython.org/pi/v2 to /lib
+Installing: /lib/sdcard.mpy
+Done
+Installing library: 'ds1307'
+Install github:brainelectronics/micropython-ds1307
+Installing github:brainelectronics/micropython-ds1307/package.json to /lib
+Installing: /lib/ds1307/__init__.py
+Installing: /lib/ds1307/ds1307.py
+Installing: /lib/ds1307/version.py
+Done
+Installing library: 'dht'
+Install dht
+Installing dht (latest) from https://micropython.org/pi/v2 to /lib
+Installing: /lib/dht.mpy
+Done
+Copying over user-libraries
+mkdir :/usr
+mkdir :/usr/lib
+cp ./src/lib/picostation_logging.py :/usr/lib/picostation_logging.py
+cp ./src/lib/picostation_helper.py :/usr/lib/picostation_helper.py
+cp ./src/lib/picostation_wrapper.py :/usr/lib/picostation_wrapper.py
+Copying over scripts
+cp ./src/boot.py :boot.py
+cp ./src/main.py :main.py
+Copying over metadata and configuration files
+cp ./.tmp/station.txt :station.txt
+cp ./machine_config.py :machine_config.py
+Setting the machine time from the host
+Running the setup script
+
+upysh is intended to be imported using:
+from upysh import *
+
+To see this help text again, type "man".
+
+upysh commands:
+clear, ls, ls(...), head(...), cat(...), newfile(...)
+cp('src', 'dest'), mv('old', 'new'), rm(...)
+pwd, cd(...), mkdir(...), rmdir(...)
+
+Cleaning up
+mkdir :/.archive
+cp :station.txt :/.archive/station.txt
+cp :machine_config.py :/.archive/machine_config.py
+rm :station.txt
+Station setup complete!
