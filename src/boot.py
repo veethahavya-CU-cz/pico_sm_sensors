@@ -1,5 +1,4 @@
 from usys import path as sys_path
-from uos import mkdir
 from machine import RTC, Pin
 from utime import time
 from time import sleep as pause
@@ -7,7 +6,7 @@ from machine import lightsleep as sleep
 
 from os import path
 
-sys_path.append('/usr/lib')
+sys_path.insert(0, '/usr/lib')
 import picostation_logging as log
 from picostation_helper import get_config, prep_next_ts
 from picostation_wrapper import rtc_setup, sd_mount, status_led
@@ -35,7 +34,7 @@ if path.exists('/config.json'):
     if CONFIG['IO']['log']['UART']:
         uart_out = [
             CONFIG['Pin']['UART']['BUS'],
-            CONFIG['time']['interval']['UART_BAUD'],
+            CONFIG['BAUD']['UART'],
             CONFIG['Pin']['UART']['TX'],
             CONFIG['Pin']['UART']['RX'],
         ]
@@ -71,12 +70,16 @@ else:
 # Calculate next record time
 next_record_time, next_record_timestamp = prep_next_ts()
 led.off()
+status_led('off')
+pause(CONFIG['time']['sleep_buffer_pause'])
 
 # Sleep or pause until the next record time
 time_to_next_record = next_record_time - time()
 if time_to_next_record > CONFIG['time']['wake_haste']:
     log.info(f"Sleeping until next record time: {next_record_timestamp}, for {time_to_next_record} seconds.")
+    pause(CONFIG['time']['sleep_buffer_pause'])
     sleep((time_to_next_record - CONFIG['time']['wake_haste']) * 1000)
+    pause(CONFIG['time']['sleep_buffer_pause'])
     log.info("Woke up from sleep (@boot). Starting main loop.")
 else:
     log.info("Next record time is too close. Skipping sleep.")

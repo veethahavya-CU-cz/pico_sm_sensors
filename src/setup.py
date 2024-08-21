@@ -9,7 +9,7 @@ from ujson import dump as dump_json
 from os import path
 from upysh import cp
 
-sys_path.append('/usr/lib')
+sys_path.insert(0, '/usr/lib')
 import picostation_logging as log
 from picostation_wrapper import rtc_setup, sd_mount, status_led
 
@@ -54,7 +54,7 @@ def setup_logging():
     if CONFIG['IO']['log']['UART']:
         uart_out = [
             CONFIG['Pin']['UART']['BUS'],
-            CONFIG['time']['interval']['UART_BAUD'],
+            CONFIG['BAUD']['UART'],
             CONFIG['Pin']['UART']['TX'],
             CONFIG['Pin']['UART']['RX'],
         ]

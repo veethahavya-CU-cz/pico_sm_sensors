@@ -8,21 +8,21 @@ from sdcard import SDCard
 from ds1307 import DS1307
 from dht import DHT11
 
-sys_path.append('/usr/lib')
+sys_path.insert(0, '/usr/lib')
 import picostation_logging as log
 from picostation_helper import get_config, mean, median
 
 
 def rtc_setup():
-    config = get_config()
+    CONFIG = get_config()
     log.debug("Defining I2C for RTC")
-    rtc_i2c = I2C(config['Pin']['RTC']['BUS'], sda=Pin(config['Pin']['RTC']['SDA']), scl=Pin(config['Pin']['RTC']['SCL']))
+    rtc_i2c = I2C(id=CONFIG['Pin']['RTC']['BUS'], scl=Pin(CONFIG['Pin']['RTC']['SCL']), sda=Pin(CONFIG['Pin']['RTC']['SDA']), freq=CONFIG['BAUD']['I2C'])
     log.debug("Scanning I2C for RTC")
     rtc_check = rtc_i2c.scan()
 
     if not rtc_check:
         status_led('flash/error_rtc')
-        log.error("@wrapper.py/rtc_setup: RTC not found")
+        log.error("@wrapper/rtc_setup: RTC not found")
         return None
 
     log.debug(f"RTC found at address: {rtc_check[0]}")
@@ -30,30 +30,30 @@ def rtc_setup():
 
 
 def sd_mount(format=False):
-    config = get_config()
+    CONFIG = get_config()
     sd_root = '/sd'
 
     if path.exists(sd_root):
-        log.warning("@wrapper.py/sd_mount: SD Card already mounted")
+        log.warning("@wrapper/sd_mount: SD Card already mounted")
         return True
 
     try:
         log.debug("Defining SPI for SD Card")
         sd_spi = SPI(
-            config['Pin']['SD']['BUS'],
-            baudrate=1_000_000,
-            sck=Pin(config['Pin']['SD']['SCK']),
-            mosi=Pin(config['Pin']['SD']['MOSI']),
-            miso=Pin(config['Pin']['SD']['MISO']),
+            id=CONFIG['Pin']['SD']['BUS'],
+            baudrate=CONFIG['BAUD']['SPI'],
+            sck=Pin(CONFIG['Pin']['SD']['SCK']),
+            mosi=Pin(CONFIG['Pin']['SD']['MOSI']),
+            miso=Pin(CONFIG['Pin']['SD']['MISO']),
         )
         log.debug("Creating SD Card object")
-        sd = SDCard(sd_spi, Pin(config['Pin']['SD']['CS']))
+        sd = SDCard(sd_spi, Pin(CONFIG['Pin']['SD']['CS']))
         log.debug("Mounting SD Card as FAT")
         try:
             mount(VfsFat(sd), sd_root)
             log.debug("SD Card mounted")
         except OSError:
-            log.error("@wrapper.py/sd_mount: Failed to mount SD Card")
+            log.error("@wrapper/sd_mount: Failed to mount SD Card")
             if format:
                 log.info("Error mounting SDcard. Formatting SD Card")
                 VfsFat.mkfs(sd)
@@ -63,7 +63,7 @@ def sd_mount(format=False):
         return True
     except Exception as e:
         status_led('flash/error_sd')
-        log.error(f"@wrapper.py/sd_mount: Failed to mount SD Card: {e}")
+        log.error(f"@wrapper/sd_mount: Failed to mount SD Card: {e}")
         return False
 
 
@@ -74,17 +74,17 @@ def sd_unmount():
         umount(sd_root)
         return True
     except Exception as e:
-        log.warning(f"@wrapper.py/sd_unmount: Error unmounting SD Card: {e}")
+        log.warning(f"@wrapper/sd_unmount: Error unmounting SD Card: {e}")
         return False
 
 
 def status_led(state, var=None, flash_count=3, flash_in=0.33, flash_out=0.1, pause_after=0.1):
-    config = get_config()
+    CONFIG = get_config()
 
     def led(color_name, freq=1000):
-        r = PWM(Pin(config['Pin']['status_led']['red']), freq=freq)
-        g = PWM(Pin(config['Pin']['status_led']['green']), freq=freq)
-        b = PWM(Pin(config['Pin']['status_led']['blue']), freq=freq)
+        r = PWM(Pin(CONFIG['Pin']['status_led']['red']), freq=freq)
+        g = PWM(Pin(CONFIG['Pin']['status_led']['green']), freq=freq)
+        b = PWM(Pin(CONFIG['Pin']['status_led']['blue']), freq=freq)
 
         colors = {
             'red': (65535, 0, 0),
@@ -120,7 +120,7 @@ def status_led(state, var=None, flash_count=3, flash_in=0.33, flash_out=0.1, pau
             led('cyan')
         elif var == 'dht11':
             led('pink')
-        elif var == 'internal_temp':
+        elif var == 'ITEMP':
             led('magenta')
         elif var == 'battery':
             led('lightblue')
@@ -234,14 +234,14 @@ def status_led(state, var=None, flash_count=3, flash_in=0.33, flash_out=0.1, pau
 
 
 def read_sm(nsensors):
-    config = get_config()
-    interval = config['time']['interval']['SM']['sampling']
-    samples = config['samples']['per_red']['SM']
+    CONFIG = get_config()
+    interval = CONFIG['time']['interval']['SM']['sampling']
+    samples = CONFIG['samples']['per_red']['SM']
 
     readings = {f'SM{ns}': {'raw': [], 'mean': 0} for ns in range(1, nsensors + 1)}
 
     for ns in range(1, nsensors + 1):
-        sm_adc = ADC(config['ADC'][f'SM{ns}'])
+        sm_adc = ADC(CONFIG['ADC'][f'SM{ns}'])
         readings[f'SM{ns}']['raw'] = [sm_adc.read_u16() for _ in range(samples)]
         readings[f'SM{ns}']['mean'] = sum(readings[f'SM{ns}']['raw']) / samples
         pause(interval)
@@ -250,31 +250,34 @@ def read_sm(nsensors):
 
 
 def read_dht11():
-    config = get_config()
-    sensor = DHT11(Pin(config['Pin']['DHT11'], Pin.OUT, Pin.PULL_DOWN))
+    CONFIG = get_config()
+    sensor = DHT11(Pin(CONFIG['Pin']['DHT11'], Pin.OUT, Pin.PULL_DOWN))
+    n = 0
     while n < 5:
         try:
             sensor.measure()
+            pause(0.5)
             temp = sensor.temperature()
             hum = sensor.humidity()
             return temp, hum
         except Exception as e:
             n += 1
-            log.warning(f"@wrapper.py/read_dht11: Failed to read DHT11 [attempt {n}]: {e}")
+            log.debug(f"@wrapper/read_dht11: Failed to read DHT11 [attempt {n}]: {e}")
             pause(0.5)
+    log.error("@wrapper/read_dht11: Failed to read DHT11")
 
 
 def read_internal_temp():
-    config = get_config()
-    interval = config['time']['interval']['INTERNAL_TEMP']['sampling']
-    samples = config['samples']['per_red']['INTERNAL_TEMP']
+    CONFIG = get_config()
+    interval = CONFIG['time']['interval']['ITEMP']['sampling']
+    samples = CONFIG['samples']['per_red']['ITEMP']
 
     try:
         temp_adc = ADC(ADC.CORE_TEMP)
     except Exception:
-        temp_adc = ADC(config['ADC'].get('CORE_TEMP'))
+        temp_adc = ADC(CONFIG['ADC'].get('CORE_TEMP'))
         if not temp_adc:
-            log.critical("@wrapper.py/read_internal_temp: Temperature sensor not found")
+            log.critical("@wrapper/read_internal_temp: Temperature sensor not found")
             return None
 
     readings = [temp_adc.read_u16() for _ in range(samples)]
@@ -287,11 +290,11 @@ def read_internal_temp():
 
 
 def read_battery():
-    config = get_config()
-    interval = config['time']['interval']['VSYS']['sampling']
-    samples = config['samples']['per_red']['VSYS']
+    CONFIG = get_config()
+    interval = CONFIG['time']['interval']['VSYS']['sampling']
+    samples = CONFIG['samples']['per_red']['VSYS']
 
-    batt_adc = ADC(config['ADC']['VSYS'])
+    batt_adc = ADC(CONFIG['ADC']['VSYS'])
     readings = []
     for _ in range(samples):
         readings.append(batt_adc.read_u16())

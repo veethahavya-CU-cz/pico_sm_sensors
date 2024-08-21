@@ -9,19 +9,19 @@ CONFIG = {
     # Time, Period, and Frequency definitions
     'time': {
         'wake_haste': 7,
+        'sleep_buffer_pause': 0.5,
         ## Sampling and Logging intervals
         'interval': {
-            'SM': {'logging': 3 * 60, 'sampling': 0.1},
-            'DHT11': {'logging': None, 'sampling': None},
-            'INTERNAL_TEMP': {'sampling': 0.1},
-            'VSYS': {'sampling': 0.1},
-            'UART_BAUD': 115200,
+            'SM':       {'logging': 5 * 60, 'sampling': 0.1},
+            'DHT11':    {'logging': 10 * 60, 'sampling': 1},
+            'ITEMP':    {'logging': 15 * 60, 'sampling': 0.1},
+            'VSYS':     {'logging': 15 * 60, 'sampling': 0.1},
         },
     },
     # Number of samples per reading
-    'samples': {'per_red': {'SM': 10, 'DHT11': 5, 'INTERNAL_TEMP': 7, 'VSYS': 7}},
+    'samples': {'per_red': {'SM': 10, 'DHT11': 3, 'ITEMP': 7, 'VSYS': 7}},
     # Number of sensors
-    'nsensors': {'SM': 3, 'DHT11': 0},
+    'nsensors': {'SM': 3, 'DHT11': 1},
     # Pin definitions
     'Pin': {
         ## GPIO Pins
@@ -31,8 +31,9 @@ CONFIG = {
         'UART': {'BUS': 0, 'TX': 0, 'RX': 1},
         'RTC': {'BUS': 1, 'SCL': 7, 'SDA': 6},
         'SD': {'BUS': 0, 'SCK': 2, 'MOSI': 3, 'MISO': 4, 'CS': 5},
-        'DHT11': 20,
+        'DHT11': 9,
     },
+    'BAUD': {'UART': 115200, 'SPI': 1_000_000, 'I2C': 80_000},
     ## ADC Channels
     'ADC': {'SM1': 0, 'SM2': 1, 'SM3': 2, 'VSYS': 3, 'temperature': 4},
     ## Depth SM of sensors

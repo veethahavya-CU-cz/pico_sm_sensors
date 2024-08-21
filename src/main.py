@@ -1,32 +1,33 @@
 from usys import path as sys_path
 from utime import time
 from utime import sleep as pause
+from machine import reset
 from machine import RTC, Pin
 from machine import lightsleep as sleep
 
 from os import path
 
-sys_path.append('/usr/lib')
+sys_path.insert(0, '/usr/lib')
 import picostation_logging as log
 from picostation_wrapper import rtc_setup, sd_mount, read_sm, read_dht11, read_internal_temp, read_battery, status_led
 from picostation_helper import get_config, prep_next_ts
 
 
 # Read config file
-config = get_config()
+CONFIG = get_config()
 status_led('busy')
 
 led = Pin('LED', Pin.OUT)
-logger_switch = Pin(config['Pin']['logger_switch'], Pin.IN)
+logger_switch = Pin(CONFIG['Pin']['logger_switch'], Pin.IN)
 
 # Setup RTC
 if 'clock' not in globals():
     try:
-        log.info("Setting up RTC")
+        log.debug("Setting up RTC")
         clock = rtc_setup()
         log.info("RTC setup complete")
 
-        log.info("Updating machine time")
+        log.debug("Updating machine time")
         RTC().datetime((clock.year, clock.month, clock.day, clock.weekday, clock.hour, clock.minute, clock.second, 0))
         log.info(f"Machine time updated: {RTC().datetime()}")
     except Exception as e:
@@ -35,8 +36,8 @@ if 'clock' not in globals():
         raise RuntimeError("Failed to setup RTC")
 
 # Mount SD Card
-if not path.exists(config['path']['sd_root']):
-    log.info("Mounting SD Card")
+if not path.exists(CONFIG['path']['sd_root']):
+    log.debug("Mounting SD Card")
     if not sd_mount():
         status_led('flash/error_sd')
         log.error("SD Card could not be mounted")
@@ -54,112 +55,118 @@ while True:
             pause(0.1)
 
         # Read recording parameters
-        recs_path = config['path']['out']['cache'] + '/recs'
+        recs_path = path.join(CONFIG['path']['out']['cache'], 'recs')
         if path.exists(recs_path):
             with open(recs_path, 'r') as f:
                 recs = f.read().splitlines()
-                log.info(f"Read recording parameters: {recs}")
+                log.debug(f"Read recording parameters: {recs}")
         else:
-            log.critical("Recording parameters not found in cache")
-            continue  # Skip rest of loop if recs not found
+            log.critical("Recording parameters not found in cache\nRe-booting the station controller...")
+            reset()
 
-        rec_time_path = config['path']['out']['cache'] + '/rec_time'
+        rec_time_path = path.join(CONFIG['path']['out']['cache'], 'rec_time')
         if path.exists(rec_time_path):
             with open(rec_time_path, 'r') as f:
-                next_record_time = int(f.readline().strip())
-                next_record_timestamp = f.readline().strip()
-                log.info(f"Read next record time: {next_record_time} ({next_record_timestamp})")
+                cur_record_time = int(f.readline().strip())
+                cur_record_timestamp = f.readline().strip()
+                log.debug(f"Read current record time: {cur_record_time} ({cur_record_timestamp})")
         else:
             log.critical("Next record time not found in cache")
-            continue  # Skip rest of loop if rec_time not found
+            reset()
 
-        time_to_next_record = next_record_time - time()
-        if time_to_next_record > config['time']['interval']['SM']['sampling'] * config['samples']['per_red']['SM'] + 3:
-            log.info(f"Pausing for {time_to_next_record} seconds")
+        time_to_next_record = cur_record_time - time()
+        if time_to_next_record > CONFIG['time']['interval']['SM']['sampling'] * CONFIG['samples']['per_red']['SM'] + 3:
+            log.debug(f"Too early. Pausing for {time_to_next_record} seconds")
             pause(time_to_next_record)
 
         status_led('measuring')
         # Read soil moisture
         if 'SM' in recs:
             status_led('flash/busy_measuring', var='SM')
-            log.info("Reading soil moisture")
-            readings = read_sm(config['nsensors']['SM'])
-            log.info("Writing soil moisture readings to records")
+            log.debug("Reading soil moisture")
+            readings = read_sm(CONFIG['nsensors']['SM'])
+            log.debug("Writing soil moisture readings to records")
 
-            with open(config['fpath']['sm'], 'a') as f:
+            with open(CONFIG['fpath']['sm'], 'a') as f:
                 f.write(
-                    f"{next_record_timestamp}, "
-                    + ", ".join(str(readings[f'SM{n}']['mean']) for n in range(1, config['nsensors']['SM'] + 1))
+                    f"{cur_record_timestamp}, "
+                    + ", ".join(str(readings[f'SM{n}']['mean']) for n in range(1, CONFIG['nsensors']['SM'] + 1))
                     + "\n"
                 )
             log.info("Soil moisture readings written to records")
-            log.info("writing raw soil moisture readings to records")
-            with open(config['fpath']['sm_raw'], 'a') as f:
+            log.debug("Writing raw soil moisture readings to data")
+            with open(CONFIG['fpath']['sm_raw'], 'a') as f:
                 f.write(
-                    f"{next_record_timestamp}, "
-                    + ", ".join(str(readings[f'SM{n}']['raw']) for n in range(1, config['nsensors']['SM'] + 1))
+                    f"{cur_record_timestamp}, "
+                    + ", ".join(str(readings[f'SM{n}']['raw']) for n in range(1, CONFIG['nsensors']['SM'] + 1))
                     + "\n"
                 )
+            log.info("Raw soil moisture readings written to data")
             status_led('flash/success_measuring')
 
         # Read temperature and humidity (DHT11)
         if 'DHT11' in recs:
             status_led('flash/busy_measuring', var='DHT11')
-            log.info("Reading temperature and humidity")
+            log.debug("Reading temperature and humidity")
             temp, humd = read_dht11()
-            log.info("Writing temperature and humidity to records")
-            with open(config['fpath']['meteo'], 'a') as f:
-                f.write(f"{next_record_timestamp}, {temp}, {humd}\n")
+            log.debug("Writing temperature and humidity to records")
+            with open(CONFIG['fpath']['meteo'], 'a') as f:
+                f.write(f"{cur_record_timestamp}, {temp}, {humd}\n")
             log.info("Temperature and humidity written to records")
             status_led('flash/success_measuring')
 
         # Read internal temperature
         if 'ITEMP' in recs:
             status_led('flash/busy_measuring', var='ITEMP')
-            log.info("Reading internal temperature")
+            log.debug("Reading internal temperature")
             temperature = read_internal_temp()
-            log.info("Writing internal temperature to data")
-            with open(config['fpath']['itemp'], 'a') as f:
-                f.write(f"{next_record_timestamp}, {temperature}\n")
+            log.debug("Writing internal temperature to data")
+            with open(CONFIG['fpath']['itemp'], 'a') as f:
+                f.write(f"{cur_record_timestamp}, {temperature}\n")
+            log.info("Internal temperature written to data")
             status_led('flash/success_measuring')
 
         # Read battery voltage
         if 'BATT' in recs:
             status_led('flash/busy_measuring', var='BATT')
-            log.info("Reading battery voltage")
+            log.debug("Reading battery voltage")
             voltage, percentage = read_battery()
-            log.info("Writing battery voltage to data")
-            with open(config['fpath']['battery'], 'a') as f:
-                f.write(f"{next_record_timestamp}, {voltage}, {percentage}\n")
+            log.debug("Writing battery voltage to data")
+            with open(CONFIG['fpath']['battery'], 'a') as f:
+                f.write(f"{cur_record_timestamp}, {voltage}, {percentage}\n")
+            log.info("Battery voltage written to data")
             status_led('flash/success_measuring')
 
         status_led('busy')
-        # Calculate next record time
-        if time() <= next_record_time:
-            status_led('idle')
-            pause(next_record_time - time() + 1)
+        log.debug(f"Current time: {time()} & Current record time: {cur_record_time}")
+        if time() < cur_record_time:
+            status_led('flash/idle')
+            log.info(f"Waiting for current recording time to elapse. Pausing for {cur_record_time - time() + 1} seconds")
+            pause(cur_record_time - time() + 1)
 
         status_led('busy')
         next_record_time, next_record_timestamp = prep_next_ts()
         time_to_next_record = next_record_time - time()
-        if time_to_next_record > config['time']['wake_haste']:
+        if time_to_next_record > CONFIG['time']['wake_haste']:
             log.info(
-                f"Sleeping until next record time: {next_record_timestamp}; for {time_to_next_record - config['time']['wake_haste']} seconds"
+                f"Sleeping until next record time: {next_record_timestamp}; for {time_to_next_record - CONFIG['time']['wake_haste']} seconds"
             )
             status_led('flash/idle')
-            sleep((time_to_next_record - config['time']['wake_haste']) * 1000)
+            pause(CONFIG['time']['sleep_buffer_pause'])
+            sleep((time_to_next_record - CONFIG['time']['wake_haste']) * 1000)
             status_led('busy')
             log.info("Woke up from sleep (@main). Resuming main loop.")
         else:
             log.info("Next record time is too close. Skipping sleep.")
-            status_led('idle')
+            status_led('flash/idle')
+            status_led('off')
             pause(time_to_next_record)
             log.info("Resuming main loop.")
 
     else:
         status_led('idle')
         led.on()
-        log.info("Recording turned off. Pausing for 60 seconds")
-        pause(3)
+        log.info("Recording turned off. Pausing for 15 seconds")
+        pause(15)
         log.info("Resuming switch check")
         led.off()

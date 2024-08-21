@@ -21,7 +21,8 @@ log_and_run() {
 lMPR="log_and_run mpremote "
 lMPRr="log_and_run mpremote resume "
 
-# Flag to control datetime.txt generation for datetime updation via external RTC (default: disabled); Automatically, the machine RTC is set from the host and then transferred to the external RTC
+# Flag to control datetime.txt generation for datetime updation via external RTC (default: disabled);
+## Automatically, the machine RTC is set from the host and then transferred to the external RTC
 WRITE_DATETIME=false
 
 # Parse arguments, including optional flag
@@ -73,6 +74,12 @@ fi
 
 # Check if the station controller has any files on it and prompt the user to remove them
 root_files=$(mpremote resume exec "import os; print(os.listdir())" | tr -d '[:space:]')
+if [ $? -ne 0 ] || [ "$root_files" == "nodevicefound" ]; then
+    echo "Error: No device found to flash!" | tee -a "$LOGFILE"
+    echo -e "  If the device is connected, check if there are any terminals open elsewhere and close it.\n  Micropython REPL can only be accessed by one terminal at a time." | tee -a "$LOGFILE"
+    exit 1
+fi
+
 if [[ "$root_files" != "[]" && "$root_files" != "['/']" ]]; then
     read -p "The station controller has some files on them: $root_files. Would you like to remove them for a clean install?? (y/n): " choice
     if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
@@ -114,6 +121,14 @@ fi
 # (Set the machine time from the host and) Run the setup script
 echo "Setting the machine time from the host"
 $lMPRr rtc --set
+echo "Machine time set to: $(mpremote resume exec "from utime import localtime; from datetime import datetime; print(datetime(*localtime()[:-2]).isoformat())")"
+read -p "Is the timezone information (check the hour) correct? (y/n): " choice
+if [[ "$choice" == "n" || "$choice" == "N" ]]; then
+    read -p "Enter the offset in hours (e.g. +5:30 is 5.5; -1:00 is -1): " TZ_OFFSET
+    $lMPRr rtc --set
+    $lMPRr exec "from machine import RTC; from datetime import datetime, timedelta; from utime import localtime; now = datetime(*localtime()[:-2]); tz_offset = timedelta(hours=$TZ_OFFSET); now += tz_offset; rtc = RTC(); rtc.datetime(now.timetuple()[:3] + (localtime()[-2], ) + now.timetuple()[3:6] + (0,))"
+    echo "Machine time updated to: $(mpremote resume exec "from utime import localtime; from datetime import datetime; print(datetime(*localtime()[:-2]).isoformat())")"
+fi
 echo "Running the setup script"
 $lMPRr run ./src/setup.py
 

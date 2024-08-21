@@ -1,14 +1,15 @@
-from machine import Pin, I2C
-from utime import time, sleep
-from dht11 import DHT11, InvalidChecksum
-import picosleep
+from machine import Pin
+from utime import sleep
+from dht import DHT11
 
 while True:
-    time.sleep(1)
+    sleep(1)
     pin = Pin(9, Pin.OUT, Pin.PULL_DOWN)
     sensor = DHT11(pin)
-    t  = (sensor.temperature)
-    h = (sensor.humidity)
-    print("Temperature: {}".format(sensor.temperature))
-    print("Humidity: {}".format(sensor.humidity))
+    sensor.measure()
+    sleep(0.5)
+    t  = sensor.temperature()
+    h = sensor.humidity()
+    print("Temperature: {}".format(t))
+    print("Humidity: {}".format(h))
     sleep(2)

@@ -21,7 +21,7 @@ if path.exists(config_path):
         try:
             uart_obj = UART(
                 CONFIG['Pin']['UART']['BUS'],
-                baudrate=CONFIG['time']['interval']['UART_BAUD'],
+                baudrate=CONFIG['BAUD']['UART'],
                 tx=CONFIG['Pin']['UART']['TX'],
                 rx=CONFIG['Pin']['UART']['RX'],
             )

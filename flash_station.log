@@ -1,39 +1,4 @@
 
-The station controller has some files on them: ['sd','.archive','ID','LOC','NOTES','boot.py','config.json','lib','machine_config.py','main.py','usr']. Would you like to remove them for a clean install?? (y/n): Cleaning up /
-removing file: //ID
-removing file: //LOC
-removing file: //NOTES
-removing file: //boot.py
-removing file: //config.json
-removing file: //machine_config.py
-removing file: //main.py
-Warning: Not formating SD Card mounted at '//sd'
-removing dir: //.archive
-Cleaning up //.archive
-removing file: //.archive/machine_config.py
-removing file: //.archive/station.txt
-removing dir: //lib
-Cleaning up //lib
-removing file: //lib/datetime.mpy
-removing file: //lib/dht.mpy
-removing file: //lib/sdcard.mpy
-removing file: //lib/upysh.mpy
-removing dir: //lib/ds1307
-Cleaning up //lib/ds1307
-removing file: //lib/ds1307/__init__.py
-removing file: //lib/ds1307/ds1307.py
-removing file: //lib/ds1307/version.py
-removing dir: //lib/os
-Cleaning up //lib/os
-removing file: //lib/os/__init__.mpy
-removing file: //lib/os/path.mpy
-removing dir: //usr
-Cleaning up //usr
-removing dir: //usr/lib
-Cleaning up //usr/lib
-removing file: //usr/lib/picostation_helper.py
-removing file: //usr/lib/picostation_logging.py
-removing file: //usr/lib/picostation_wrapper.py
 Installing libraries: 'upysh', 'os-path', and 'datetime'
 Install upysh
 Installing upysh (latest) from https://micropython.org/pi/v2 to /lib
@@ -78,6 +43,8 @@ Copying over metadata and configuration files
 cp ./.tmp/station.txt :station.txt
 cp ./machine_config.py :machine_config.py
 Setting the machine time from the host
+Machine time set to: 2024-08-21T15:27:25
+Is the timezone information (check the hour) correct? (y/n): Enter the offset in hours (e.g. +5:30 is 5.5; -1:00 is -1): Machine time updated to: 2024-08-21T16:27:45
 Running the setup script
 
 upysh is intended to be imported using:

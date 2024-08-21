@@ -2,10 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"name": "src",
-			"path": "src"
 		}
 	],
 	"settings": {
