@@ -1,1 +1,0 @@
-(micro)mamba|conda env create --name test_clone --file=rpi-pico_mamba-env.yml

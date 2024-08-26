@@ -1,0 +1,1 @@
+conda env create --file=rpi-pico_mamba-env.yml

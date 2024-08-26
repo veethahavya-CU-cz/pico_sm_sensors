@@ -1,4 +1,13 @@
-.vscode
+.vscode/
+**/*.code-workspace
+.mypy_cache/
+
+**/.archive/
+data/
 
 
-*.pdf
+docs/**/*.pdf
+*.log
+
+pymakr.conf
+.micropico

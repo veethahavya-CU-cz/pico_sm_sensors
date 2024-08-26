@@ -1,3 +1,0 @@
-sid=8
-loc=station: H
-notes= 
