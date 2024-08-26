@@ -57,4 +57,4 @@
 ### Summary
 - **Sustained operation on a full charge without charging:** **~25 days**
 - **Minimum (direct) sunlight hours to keep the device powered:** **~38 minutes**
-- **Minimum (direct) sunlight hours to charge a fully depleted battery (3000 mAh):** **20 hours**
+- **Minimum (direct) sunlight hours to charge a fully depleted battery (3000 mAh):** **~20 hours**
