@@ -7,8 +7,9 @@
 data/
 
 
-docs/**/*.pdf
 *.log
+docs/**/*.pdf
+**/*.stl
 
 pymakr.conf
 .micropico
