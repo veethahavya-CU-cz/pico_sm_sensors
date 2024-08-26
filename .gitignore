@@ -2,6 +2,7 @@
 **/*.code-workspace
 .mypy_cache/
 
+**/.trash/
 **/.archive/
 data/
 
