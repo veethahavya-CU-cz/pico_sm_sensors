@@ -1,4 +1,4 @@
-name: rpi-pico
+name: pico
 channels:
 - conda-forge
 dependencies:

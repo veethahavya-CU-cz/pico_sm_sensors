@@ -10,18 +10,18 @@ CONFIG = {
     'time': {
         'wake_haste': 7,
         'sleep_buffer_pause': 0.5,
-        ## Sampling and Logging intervals
+        ## Sampling and Logging intervals (s)
         'interval': {
-            'SM':       {'logging': 5 * 60, 'sampling': 0.1},
-            'DHT11':    {'logging': 10 * 60, 'sampling': 1},
-            'ITEMP':    {'logging': 15 * 60, 'sampling': 0.1},
-            'VSYS':     {'logging': 15 * 60, 'sampling': 0.1},
+            'SM':       {'logging': 15 * 60, 'sampling': 0.1},
+            'DHT11':    {'logging': None, 'sampling': None},
+            'ITEMP':    {'logging': 30 * 60, 'sampling': 0.1},
+            'VSYS':     {'logging': 30 * 60, 'sampling': 0.1},
         },
     },
     # Number of samples per reading
     'samples': {'per_red': {'SM': 10, 'DHT11': 3, 'ITEMP': 7, 'VSYS': 7}},
     # Number of sensors
-    'nsensors': {'SM': 3, 'DHT11': 1},
+    'nsensors': {'SM': 3, 'DHT11': 0},
     # Pin definitions
     'Pin': {
         ## GPIO Pins
@@ -33,7 +33,7 @@ CONFIG = {
         'SD': {'BUS': 0, 'SCK': 2, 'MOSI': 3, 'MISO': 4, 'CS': 5},
         'DHT11': 9,
     },
-    'BAUD': {'UART': 115200, 'SPI': 1_000_000, 'I2C': 80_000},
+    'BAUD': {'UART': 115_200, 'SPI': 1_000_000, 'I2C': 80_000},
     ## ADC Channels
     'ADC': {'SM1': 0, 'SM2': 1, 'SM3': 2, 'VSYS': 3, 'temperature': 4},
     ## Depth SM of sensors
@@ -47,6 +47,7 @@ CONFIG = {
         ## Record Battery Voltage/Percentage
         'BATT': True,
         ## Logging Configuration
+        #TODO: Add status_LED opts
         'log': {'file': '/sd/sys.log', 'level': 'DEBUG', 'UART': True},  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     },
     # Path Configurations

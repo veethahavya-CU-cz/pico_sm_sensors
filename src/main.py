@@ -45,7 +45,7 @@ if not path.exists(CONFIG['path']['sd_root']):
     log.info("SD Card mounted")
 
 
-# Logging setup
+# Data Recording and Logging setup
 while True:
     if logger_switch.value():
         for _ in range(7):
@@ -165,6 +165,7 @@ while True:
 
     else:
         status_led('idle')
+
         led.on()
         log.info("Recording turned off. Pausing for 15 seconds")
         pause(15)

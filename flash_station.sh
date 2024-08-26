@@ -124,7 +124,7 @@ $lMPRr rtc --set
 echo "Machine time set to: $(mpremote resume exec "from utime import localtime; from datetime import datetime; print(datetime(*localtime()[:-2]).isoformat())")"
 read -p "Is the timezone information (check the hour) correct? (y/n): " choice
 if [[ "$choice" == "n" || "$choice" == "N" ]]; then
-    read -p "Enter the offset in hours (e.g. +5:30 is 5.5; -1:00 is -1): " TZ_OFFSET
+    read -p "Enter the offset in hours (e.g. if actual time is 17:30, but machine was set to 16:30, TZ_OFFSET=1;\nif actual time is 17:30, but machine was set to 18:00, TZ_OFFSET=-0.5): " TZ_OFFSET
     $lMPRr rtc --set
     $lMPRr exec "from machine import RTC; from datetime import datetime, timedelta; from utime import localtime; now = datetime(*localtime()[:-2]); tz_offset = timedelta(hours=$TZ_OFFSET); now += tz_offset; rtc = RTC(); rtc.datetime(now.timetuple()[:3] + (localtime()[-2], ) + now.timetuple()[3:6] + (0,))"
     echo "Machine time updated to: $(mpremote resume exec "from utime import localtime; from datetime import datetime; print(datetime(*localtime()[:-2]).isoformat())")"
@@ -137,6 +137,7 @@ echo "Cleaning up"
 $lMPRr mkdir :/.archive
 $lMPRr cp :station.txt :/.archive/station.txt
 $lMPRr cp :machine_config.py :/.archive/machine_config.py
+$lMPRr rm :machine_config.py
 if [[ $WRITE_DATETIME == true ]]; then
     $lMPRr cp :datetime.txt :/.archive/datetime.txt
     $lMPRr rm :datetime.txt

@@ -1,65 +1,7 @@
 
-Installing libraries: 'upysh', 'os-path', and 'datetime'
-Install upysh
-Installing upysh (latest) from https://micropython.org/pi/v2 to /lib
-Installing: /lib/upysh.mpy
-Done
-Install os-path
-Installing os-path (latest) from https://micropython.org/pi/v2 to /lib
-Installing: /lib/os/__init__.mpy
-Installing: /lib/os/path.mpy
-Done
-Install datetime
-Installing datetime (latest) from https://micropython.org/pi/v2 to /lib
-Installing: /lib/datetime.mpy
-Done
-Installing library: 'sdcard'
-Install sdcard
-Installing sdcard (latest) from https://micropython.org/pi/v2 to /lib
-Installing: /lib/sdcard.mpy
-Done
-Installing library: 'ds1307'
-Install github:brainelectronics/micropython-ds1307
-Installing github:brainelectronics/micropython-ds1307/package.json to /lib
-Installing: /lib/ds1307/__init__.py
-Installing: /lib/ds1307/ds1307.py
-Installing: /lib/ds1307/version.py
-Done
-Installing library: 'dht'
-Install dht
-Installing dht (latest) from https://micropython.org/pi/v2 to /lib
-Installing: /lib/dht.mpy
-Done
-Copying over user-libraries
-mkdir :/usr
-mkdir :/usr/lib
-cp ./src/lib/picostation_logging.py :/usr/lib/picostation_logging.py
-cp ./src/lib/picostation_helper.py :/usr/lib/picostation_helper.py
-cp ./src/lib/picostation_wrapper.py :/usr/lib/picostation_wrapper.py
-Copying over scripts
-cp ./src/boot.py :boot.py
-cp ./src/main.py :main.py
-Copying over metadata and configuration files
-cp ./.tmp/station.txt :station.txt
-cp ./machine_config.py :machine_config.py
-Setting the machine time from the host
-Machine time set to: 2024-08-21T15:27:25
-Is the timezone information (check the hour) correct? (y/n): Enter the offset in hours (e.g. +5:30 is 5.5; -1:00 is -1): Machine time updated to: 2024-08-21T16:27:45
-Running the setup script
-
-upysh is intended to be imported using:
-from upysh import *
-
-To see this help text again, type "man".
-
-upysh commands:
-clear, ls, ls(...), head(...), cat(...), newfile(...)
-cp('src', 'dest'), mv('old', 'new'), rm(...)
-pwd, cd(...), mkdir(...), rmdir(...)
-
-Cleaning up
-mkdir :/.archive
-cp :station.txt :/.archive/station.txt
-cp :machine_config.py :/.archive/machine_config.py
-rm :station.txt
-Station setup complete!
+Error: No device found to flash!
+Error: No device found to flash!
+  If the device is connected, check if there are any terminals open elsewhere and close it.
+  Micropython REPL can only be accessed by one terminal at a time.
+  If the device is connected, check if there are any terminals open elsewhere and close it.
+  Micropython REPL can only be accessed by one terminal at a time.

@@ -116,13 +116,13 @@ def status_led(state, var=None, flash_count=3, flash_in=0.33, flash_out=0.1, pau
     elif state == 'idle':
         led('white')
     elif state == 'measuring':
-        if var == 'sm':
+        if var.lower() == 'sm':
             led('cyan')
-        elif var == 'dht11':
+        elif var.lower() == 'dht11':
             led('pink')
-        elif var == 'ITEMP':
+        elif var.lower() == 'itemp':
             led('magenta')
-        elif var == 'battery':
+        elif var.lower() == 'battery':
             led('lightblue')
         else:
             led('white')
