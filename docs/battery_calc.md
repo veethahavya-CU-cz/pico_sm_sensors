@@ -39,22 +39,23 @@
   Daily consumption ≈ 3.95 mAh/h × 24 h ≈ 94.8 mAh
 
 - **Solar panel output:**  
-  - Current: 200 mA  
+  - Current: 200 mA
   - Voltage: 6V  
   - Charging circuit efficiency: 75%
 
 - **Effective charging current:**  
-  Effective current = 200 mA × 0.75 = 150 mA
+  Effective Current = (6 V / 3.7 V) × 200 mA × 0.75  
+  Effective Current ≈ 0.162 × 200 mA ≈ 162 mA
 
 - **Minimum sunlight hours to keep the device powered:**  
-  94.8 mAh = 150 mA × Peak Sunlight Hours  
-  Peak Sunlight Hours ≈ 94.8 mAh / 150 mA ≈ 0.632 hours (about 37.9 minutes)
+  94.8 mAh = 162 mA × Req. Peak Sunlight Hours  
+  Req. Peak Sunlight Hours ≈ 94.8 mAh / 162 mA ≈ 0.585 hours (about 35.1 minutes)
 
 - **Minimum sunlight hours to charge a fully depleted battery (3000 mAh):**  
-  3000 mAh = 150 mA × Peak Sunlight Hours  
-  Peak Sunlight Hours ≈ 3000 mAh / 150 mA = 20 hours
+  3000 mAh = 162 mA × Req. Peak Sunlight Hours  
+  Req. Peak Sunlight Hours ≈ 3000 mAh / 162 mA ≈ 18.52 hours
 
 ### Summary
 - **Sustained operation on a full charge without charging:** **~25 days**
-- **Minimum (direct) sunlight hours to keep the device powered:** **~38 minutes**
-- **Minimum (direct) sunlight hours to charge a fully depleted battery (3000 mAh):** **~20 hours**
+- **Minimum sunlight hours to keep the device powered:** **~35 minutes**
+- **Minimum sunlight hours to charge a fully depleted battery (3000 mAh):** **~18.5 hours**
