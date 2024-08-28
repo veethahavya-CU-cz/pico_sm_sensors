@@ -4,7 +4,7 @@
 
 **/.trash/
 **/.archive/
-data/
+data/**/*.zip
 
 
 *.log

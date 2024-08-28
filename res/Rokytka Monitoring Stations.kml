@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>Rokytka Monitoring Stations</name>
+	<Placemark id="0721726B223233C70A71">
+		<name>GW1</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>GW1</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.419211,49.02266,1110.207397</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="05C036E8483233C70A73">
+		<name>GW2</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>GW2</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.416672,49.02259000000001,1106.532593</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="104443E7533233C70A73">
+		<name>GW3</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>GW3</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.41427,49.02165299999999,1101.288696</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="28A5F74BFC3233C70A73">
+		<name>GW4</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>GW4</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.414924,49.02173799999999,1100.364746</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="31993A6FCE3233C70A73">
+		<name>SM1</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>SM1</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.406644,49.02258,1146.95166</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="4E70F910713233C70A73">
+		<name>SM2</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>SM2</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.412972,49.02142499999999,1106.854736</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="5B8A5F5E923233C70A73">
+		<name>SM3</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>SM3</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.434925,49.038382,1033.623413</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="638FF01B103233C70A73">
+		<name>SM4</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>SM4</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.464854,49.011322,1096.780029</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="72E11A82763233C70A73">
+		<name>SM5</name>
+		<description>No info available</description>
+		<ExtendedData>
+			<Data name="name">
+				<value>SM5</value>
+			</Data>
+			<Data name="description">
+				<value>No info available</value>
+			</Data>
+		</ExtendedData>
+		<Point>
+			<coordinates>13.497955,49.023931,983.1235959999999</coordinates>
+		</Point>
+	</Placemark>
+</Document>
+</kml>

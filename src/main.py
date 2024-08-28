@@ -46,6 +46,7 @@ if not path.exists(CONFIG['path']['sd_root']):
 
 
 # Data Recording and Logging setup
+#TODO: report values via UART
 while True:
     if logger_switch.value():
         for _ in range(7):
