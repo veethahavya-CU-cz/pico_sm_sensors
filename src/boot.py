@@ -1,3 +1,5 @@
+# FIXME: Recording stops on month change. Need to debug time-caching, time-checking, and wake logic.
+
 from usys import path as sys_path
 from machine import RTC, Pin
 from utime import time

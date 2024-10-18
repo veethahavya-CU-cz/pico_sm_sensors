@@ -4,12 +4,17 @@
 
 **/.trash/
 **/.archive/
-data/**/*.zip
+**/data/**/*.zip
 
 
-*.log
-docs/**/*.pdf
+**/*.log
+**/docs/**/*.pdf
+**/docs/**/*.svg
+**/res/**/*.svg
 **/*.stl
+**/*.gcode
+**/*.3mf
+**/*.html
 
 pymakr.conf
 .micropico
