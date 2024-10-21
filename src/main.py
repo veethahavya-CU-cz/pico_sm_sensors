@@ -17,6 +17,9 @@ from picostation_helper import get_config, prep_next_ts
 CONFIG = get_config()
 status_led('busy')
 
+pfm = Pin(23)
+pfm.high()
+
 led = Pin('LED', Pin.OUT)
 logger_switch = Pin(CONFIG['Pin']['logger_switch'], Pin.IN)
 
