@@ -15,3 +15,7 @@ if usb_connected():
 else:
     print("USB not connected")
 ```
+
+# [ ] add a temperature sensor to calibrate the SMS
+https://randomnerdtutorials.com/raspberry-pi-pico-ds18b20-micropython/#Rpi-Pico-multiple-ds18b20-sensors-wiring
+https://www.laskakit.cz/dallas-digitalni-vodotesne-cidlo-teploty-ds18b20-1m/
