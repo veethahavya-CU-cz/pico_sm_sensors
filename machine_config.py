@@ -12,10 +12,10 @@ CONFIG = {
         'sleep_buffer_pause': 0.5,
         ## Sampling and Logging intervals (s)
         'interval': {
-            'SM':       {'logging': 15 * 60, 'sampling': 0.1},
+            'SM':       {'logging': 5 * 60, 'sampling': 0.1},
             'DHT11':    {'logging': None, 'sampling': None},
-            'ITEMP':    {'logging': 30 * 60, 'sampling': 0.1},
-            'VSYS':     {'logging': 30 * 60, 'sampling': 0.1},
+            'ITEMP':    {'logging': 10 * 60, 'sampling': 0.1},
+            'VSYS':     {'logging': 10 * 60, 'sampling': 0.1},
         },
     },
     # Number of samples per reading
