@@ -1,3 +1,0 @@
-sid=0
-loc=bench
-notes=test

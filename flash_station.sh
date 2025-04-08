@@ -146,6 +146,29 @@ else
     fi
 fi
 
+# Check if SD card works
+echo "Checking if the SD card works"
+mpremote resume exec "from usys import path as sys_path
+sys_path.insert(0, '/usr/lib')
+from picostation_wrapper import sd_mount
+if not sd_mount():
+    raise RuntimeError('SD Card could not be mounted')" > /dev/null 2>&1 || { 
+    echo "Failed to mount SD card. Check if it is inserted/connected properly."
+    exit 1
+}
+echo "SD Card works!"
+
+# Check if RTC works
+echo "Checking if the RTC works"
+mpremote resume exec "from usys import path as sys_path
+sys_path.insert(0, '/usr/lib')
+from picostation_wrapper import rtc_setup
+clock = rtc_setup()
+missing_attr = any(not hasattr(clock, attr) for attr in ('datetime', 'halt'))
+if missing_attr:
+    raise RuntimeError('Unable to connect to RTC. Check the connection.')"
+echo "RTC works!"
+
 # Run the setup script
 echo "Running the setup script"
 $lMPRr run ./src/setup.py

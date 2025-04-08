@@ -248,6 +248,22 @@ def read_sm(nsensors):
 
     return readings
 
+def write_sm(readings, timestamp, raw=True):
+    CONFIG = get_config()
+    with open(CONFIG['fpath']['sm'], 'a') as f:
+        f.write(
+            f"{timestamp}, "
+            + ", ".join(str(readings[f'SM{n}']['mean']) for n in range(1, CONFIG['nsensors']['SM'] + 1))
+            + "\n"
+        )
+    if raw:
+        with open(CONFIG['fpath']['sm_raw'], 'a') as f:
+            f.write(
+                f"{timestamp}, "
+                + ", ".join(str(readings[f'SM{n}']['raw']) for n in range(1, CONFIG['nsensors']['SM'] + 1))
+                + "\n"
+            )
+
 
 def read_dht11():
     CONFIG = get_config()
@@ -265,6 +281,11 @@ def read_dht11():
             log.debug(f"@wrapper/read_dht11: Failed to read DHT11 [attempt {n}]: {e}")
             pause(0.5)
     log.error("@wrapper/read_dht11: Failed to read DHT11")
+
+def write_dht11(temp, humd, timestamp):
+    CONFIG = get_config()
+    with open(CONFIG['fpath']['meteo'], 'a') as f:
+        f.write(f"{timestamp}, {temp}, {humd}\n")
 
 
 def read_internal_temp():
@@ -288,6 +309,11 @@ def read_internal_temp():
 
     return temperature
 
+def write_internal_temp(temperature, timestamp):
+    CONFIG = get_config()
+    with open(CONFIG['fpath']['itemp'], 'a') as f:
+        f.write(f"{timestamp}, {temperature}\n")
+
 
 def read_battery():
     CONFIG = get_config()
@@ -305,3 +331,8 @@ def read_battery():
     battery_percentage = (battery_voltage - 3.2) / (4.2 - 3.3) * 100
 
     return battery_voltage, battery_percentage
+
+def write_battery(voltage, percentage, timestamp):
+    CONFIG = get_config()
+    with open(CONFIG['fpath']['battery'], 'a') as f:
+        f.write(f"{timestamp}, {voltage}, {percentage}\n")

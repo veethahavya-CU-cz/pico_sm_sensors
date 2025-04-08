@@ -30,15 +30,19 @@ def get_config(filepath='/config.json'):
         return CONFIG
     else:
         try:
-            with open('/config.json') as f:
-                CONFIG = load_json(f)
-            return CONFIG
+            try:
+                CONFIG = get_config()
+                return CONFIG
+            except:
+                from machine_config import CONFIG
+                return CONFIG
         except:
             log.error(f"@helper/get_config: Config file not found at {filepath}")
             raise ValueError("Config file not found")
 
 
 def get_next_record_time(interval_s):
+    # HACK: Works only for hourly and sub-hourly intervals
     now = datetime(*localtime()[:-2])
 
     total_seconds_this_hr = (now.minute * 60) + now.second
@@ -48,7 +52,6 @@ def get_next_record_time(interval_s):
 
     next_record_time_dt = now + timedelta(seconds=seconds_to_next_interval)
 
-    # NOTE: using next_record_time_dt.timetuple() doesn't work. Somehow, next_record_time_dt.timetuple() just returns tuple of now.
     return (
         mktime(
             (
@@ -66,24 +69,24 @@ def get_next_record_time(interval_s):
 
 
 def prep_next_ts():
-    CONFIG = get_config(filepath='/sd/config.json')
+    CONFIG = get_config()
     log.info('Preparing for next timestep')
 
     recs = []
 
     next_sm_record_time, next_sm_record_timestamp = get_next_record_time(CONFIG['time']['interval']['SM']['logging'])
-    log.info(f"Next SM record time: ({next_sm_record_timestamp})")
+    log.debug(f"Next SM record time: ({next_sm_record_timestamp})")
 
     interval_dht = CONFIG['time']['interval']['DHT11']['logging']
     next_dht_record_time, next_dht_record_timestamp = get_next_record_time(interval_dht) if interval_dht else (None, None)
     if next_dht_record_time:
-        log.info(f"Next DHT11 record time: ({next_dht_record_timestamp})")
+        log.debug(f"Next DHT11 record time: ({next_dht_record_timestamp})")
 
     next_itemp_record_time, next_itemp_record_timestamp = get_next_record_time(CONFIG['time']['interval']['ITEMP']['logging'])
-    log.info(f"Next ITEMP record time: ({next_itemp_record_timestamp})")
+    log.debug(f"Next ITEMP record time: ({next_itemp_record_timestamp})")
 
     next_batt_record_time, next_batt_record_timestamp = get_next_record_time(CONFIG['time']['interval']['VSYS']['logging'])
-    log.info(f"Next BATT record time: ({next_batt_record_timestamp})")
+    log.debug(f"Next BATT record time: ({next_batt_record_timestamp})")
 
     next_record_times = [next_sm_record_time, next_dht_record_time, next_itemp_record_time, next_batt_record_time]
     next_dht_record_timestamps = [
