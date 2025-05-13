@@ -39,7 +39,7 @@ CONFIG = {
     ## ADC Channels
     'ADC': {'SM1': 0, 'SM2': 1, 'SM3': 2, 'VSYS': 3, 'temperature': 4},
     ## Depth SM of sensors
-    'depth': {'SM1': 15, 'SM2': 40, 'SM3': 60},
+    'depth': {'SM1': 5, 'SM2': 15, 'SM3': 50},
     # Formats
     'format': {'time': '%Y-%m-%d %H:%M:%S'},
     # I/O Configuration

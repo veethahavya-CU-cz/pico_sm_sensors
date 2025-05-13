@@ -16,5 +16,7 @@
 **/*.3mf
 **/*.html
 
+3dp/components/
+
 pymakr.conf
 .micropico
